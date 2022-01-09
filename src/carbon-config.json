@@ -1,0 +1,8 @@
+{
+	"blueprints": [
+		{
+			"name": "foo",
+			"path": "blueprints/foo.txt"
+		}
+	]
+}

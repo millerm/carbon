@@ -1,9 +1,11 @@
+use serde::{Deserialize, Serialize};
+use serde_json::Result;
 use std::fs::{File, OpenOptions};
 use std::io;
 use std::path::Path;
 
 /// Represents a Blueprint which right now is a name and a path to a file
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Blueprint {
   name: String,
   path: String,
@@ -13,9 +15,29 @@ pub struct Blueprint {
 type BlueprintList = Vec<Box<Blueprint>>;
 
 /// Represents the contents of a Configuration file
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Configuration {
   blueprints: BlueprintList,
+}
+
+impl Configuration {
+  pub fn from_file(file: &File) -> io::Result<Configuration> {
+    let data = r#"
+    {
+      "blueprints": [
+        {
+          "name": "foo",
+          "path": "blueprints/foo.txt"
+        }
+      ]
+    }
+    "#;
+
+    let c: Configuration = serde_json::from_str(&data).unwrap();
+
+    println!("Foo is {:?}", c);
+    Ok(c)
+  }
 }
 
 /// TODO(@millerm): Too meta
@@ -33,26 +55,9 @@ impl Carbon {
       .append(true)
       .open(path)?;
 
-    // Here we test adding blueprints.
-    // These will be parsed from a configuration file.
-    let test_blueprint = Blueprint {
-      name: String::from("test1"),
-      path: String::from("test1.json"),
-    };
+    let c = Configuration::from_file(&config_file).unwrap();
 
-    let test_blueprint2 = Blueprint {
-      name: String::from("test2"),
-      path: String::from("test2.json"),
-    };
-
-    let mut bp = BlueprintList::new();
-
-    bp.push(Box::new(test_blueprint));
-    bp.push(Box::new(test_blueprint2));
-
-    let conf = Configuration { blueprints: bp };
-
-    println!("Config --> {:?}", conf);
+    println!("Config --> {:?}", c);
 
     Ok(Carbon { config_file })
   }
