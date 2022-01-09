@@ -50,15 +50,15 @@ impl Carbon {
 
     // Build up a mapping of blueprint names to paths.
     // A "path" is the relative path to the template file for which a blueprint is generated from.
-    let mut blueprint_hm: HashMap<String, String> = HashMap::new();
+    let mut blueprints: HashMap<String, String> = HashMap::new();
 
     for blueprint in &configuration.blueprints {
-      blueprint_hm.insert(blueprint.name.to_string(), blueprint.path.to_string());
+      blueprints.insert(blueprint.name.to_string(), blueprint.path.to_string());
     }
 
     Ok(Carbon {
       configuration,
-      blueprints: blueprint_hm,
+      blueprints: blueprints,
     })
   }
 
