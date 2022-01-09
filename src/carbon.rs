@@ -58,7 +58,7 @@ impl Carbon {
 
     Ok(Carbon {
       configuration,
-      blueprints: blueprints,
+      blueprints,
     })
   }
 
