@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
@@ -32,6 +33,7 @@ impl Configuration {
 #[derive(Debug)]
 pub struct Carbon {
   configuration: Configuration,
+  blueprints: HashMap<String, String>,
 }
 
 impl Carbon {
@@ -43,9 +45,21 @@ impl Carbon {
       .read_to_string(&mut buffer)
       .expect("Error reading to string...");
 
+    // Parse the config file
     let configuration = Configuration::from_file(&buffer)?;
 
-    Ok(Carbon { configuration })
+    // Build up a mapping of blueprint names to paths.
+    // A "path" is the relative path to the template file for which a blueprint is generated from.
+    let mut blueprint_hm: HashMap<String, String> = HashMap::new();
+
+    for blueprint in &configuration.blueprints {
+      blueprint_hm.insert(blueprint.name.to_string(), blueprint.path.to_string());
+    }
+
+    Ok(Carbon {
+      configuration,
+      blueprints: blueprint_hm,
+    })
   }
 
   pub fn generate(&mut self, blueprint: &str, destination_path: &Path) -> io::Result<()> {
