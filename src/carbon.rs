@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
-use serde_json::Result;
-use std::fs::{File, OpenOptions};
+use std::fs::File;
 use std::io;
+use std::io::prelude::*;
+
 use std::path::Path;
 
 /// Represents a Blueprint which right now is a name and a path to a file
@@ -21,45 +22,30 @@ pub struct Configuration {
 }
 
 impl Configuration {
-  pub fn from_file(file: &File) -> io::Result<Configuration> {
-    let data = r#"
-    {
-      "blueprints": [
-        {
-          "name": "foo",
-          "path": "blueprints/foo.txt"
-        }
-      ]
-    }
-    "#;
+  pub fn from_file(config_str: &str) -> io::Result<Configuration> {
+    let c: Configuration = serde_json::from_str(config_str).expect("Error parsing from string...");
 
-    let c: Configuration = serde_json::from_str(&data).unwrap();
-
-    println!("Foo is {:?}", c);
     Ok(c)
   }
 }
 
-/// TODO(@millerm): Too meta
 #[derive(Debug)]
 pub struct Carbon {
-  config_file: File,
+  configuration: Configuration,
 }
 
 impl Carbon {
   pub fn open(path: &Path) -> io::Result<Self> {
-    let config_file = OpenOptions::new()
-      .read(true)
-      .write(true)
-      .create(true)
-      .append(true)
-      .open(path)?;
+    let mut buffer = String::new();
+    let mut file = File::open(path).expect("Error opening file...");
 
-    let c = Configuration::from_file(&config_file).unwrap();
+    file
+      .read_to_string(&mut buffer)
+      .expect("Error reading to string...");
 
-    println!("Config --> {:?}", c);
+    let configuration = Configuration::from_file(&buffer)?;
 
-    Ok(Carbon { config_file })
+    Ok(Carbon { configuration })
   }
 
   pub fn generate(&mut self, blueprint: &str, destination_path: &Path) -> io::Result<()> {
