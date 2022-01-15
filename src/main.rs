@@ -24,6 +24,7 @@ fn main() {
       carbon
         .generate(blueprint, destination_path)
         .expect("Unable to generate blueprint");
+      println!("Blueprint was successfully generated.");
     }
     _ => eprintln!("{}", &USAGE),
   }

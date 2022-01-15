@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
@@ -69,6 +70,12 @@ impl Carbon {
       destination_path.display()
     );
 
-    Ok(())
+    match self.blueprints.get(blueprint) {
+      Some(path) => {
+        fs::copy(path, destination_path)?;
+        Ok(())
+      }
+      None => Ok(()), // TODO: Handle gracefully
+    }
   }
 }
