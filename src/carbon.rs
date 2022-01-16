@@ -7,11 +7,17 @@ use std::io::prelude::*;
 
 use std::path::Path;
 
-/// Represents a Blueprint which right now is a name and a path to a file
-#[derive(Serialize, Deserialize, Debug)]
+/**
+ * Represents a Blueprint which right now, consists of:
+ *  1. A name
+ *  2. A template file
+ *  3. A root directory (where all blueprints of this type should be placed)
+ */
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Blueprint {
   name: String,
-  path: String,
+  template: String,
+  root_dir: String,
 }
 
 /// A configuration file will have a list of Blueprints
@@ -31,10 +37,20 @@ impl Configuration {
   }
 }
 
+/// Build the path for where the newly generated file should live
+fn _build_destination_path(root: &str, filename: &str) -> String {
+  let mut pathname = String::new();
+  pathname += &root;
+  pathname += "/";
+  pathname += &filename;
+
+  pathname
+}
+
 #[derive(Debug)]
 pub struct Carbon {
   configuration: Configuration,
-  blueprints: HashMap<String, String>,
+  blueprints: HashMap<String, Box<Blueprint>>,
 }
 
 impl Carbon {
@@ -49,12 +65,11 @@ impl Carbon {
     // Parse the config file
     let configuration = Configuration::from_file(&buffer)?;
 
-    // Build up a mapping of blueprint names to paths.
-    // A "path" is the relative path to the template file for which a blueprint is generated from.
-    let mut blueprints: HashMap<String, String> = HashMap::new();
+    // Create a mapping of names to blueprints
+    let mut blueprints: HashMap<String, Box<Blueprint>> = HashMap::new();
 
     for blueprint in &configuration.blueprints {
-      blueprints.insert(blueprint.name.to_string(), blueprint.path.to_string());
+      blueprints.insert(blueprint.name.to_string(), blueprint.clone());
     }
 
     Ok(Carbon {
@@ -63,16 +78,24 @@ impl Carbon {
     })
   }
 
-  pub fn generate(&mut self, blueprint: &str, destination_path: &Path) -> io::Result<()> {
-    println!(
-      "Generating blueprint {} at path {}...",
-      blueprint,
-      destination_path.display()
-    );
-
+  pub fn generate(&mut self, blueprint: &str, name: &str) -> io::Result<()> {
     match self.blueprints.get(blueprint) {
-      Some(path) => {
-        fs::copy(path, destination_path)?;
+      Some(config) => {
+        let pathname = _build_destination_path(&config.root_dir, &name);
+
+        // Make sure the root_dir actually exists
+        // TODO: Gracefully handle overwriting a file
+        match Path::new(&config.root_dir).is_dir() {
+          true => (),
+          false => {
+            fs::create_dir(&config.root_dir)?;
+            ()
+          }
+        }
+
+        // Copy the contents from the template into the final location.
+        fs::copy(&config.template, pathname)?;
+
         Ok(())
       }
       None => Ok(()), // TODO: Handle gracefully
