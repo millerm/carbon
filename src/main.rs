@@ -20,10 +20,10 @@ fn main() {
       let blueprint = maybe_blueprint.expect(&USAGE).as_ref();
       let name = maybe_name.expect(&USAGE);
 
-      carbon
-        .generate(blueprint, name)
-        .expect("Unable to generate blueprint");
-      println!("Blueprint was successfully generated.");
+      match carbon.generate(blueprint, name) {
+        Ok(path) => println!("Blueprint was successfully generated at: {}", path),
+        Err(e) => println!("Error generating the blueprint: {:?}", e),
+      }
     }
     _ => eprintln!("{}", &USAGE),
   }

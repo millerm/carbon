@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt;
 use std::fs;
 use std::fs::File;
 use std::io;
@@ -55,6 +56,25 @@ pub struct Carbon {
   blueprints: HashMap<String, Box<Blueprint>>,
 }
 
+#[derive(Debug)]
+pub struct CarbonError {
+  message: String,
+}
+
+impl CarbonError {
+  fn new(msg: &str) -> CarbonError {
+    CarbonError {
+      message: msg.to_string(),
+    }
+  }
+}
+
+impl fmt::Display for CarbonError {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "{}", self.message)
+  }
+}
+
 impl Carbon {
   pub fn open(path: &Path) -> io::Result<Self> {
     let mut buffer = String::new();
@@ -80,27 +100,24 @@ impl Carbon {
     })
   }
 
-  pub fn generate(&mut self, blueprint: &str, name: &str) -> io::Result<()> {
+  pub fn generate(&mut self, blueprint: &str, name: &str) -> Result<String, CarbonError> {
     match self.blueprints.get(blueprint) {
       Some(config) => {
         let pathname = _build_destination_path(&config.root_dir, &name, &config.file_type);
+        let does_exist = Path::new(&config.root_dir).is_dir();
 
-        // Make sure the root_dir actually exists
-        // TODO: Gracefully handle overwriting a file
-        match Path::new(&config.root_dir).is_dir() {
-          true => (),
-          false => {
-            fs::create_dir(&config.root_dir)?;
-            ()
-          }
+        if !does_exist {
+          fs::create_dir(&config.root_dir).expect("Error creating directory");
         }
 
-        // Copy the contents from the template into the final location.
-        fs::copy(&config.template, pathname)?;
+        let contents = fs::read_to_string(&config.template).unwrap();
+        let new_contents = contents.replace("<name>", &name);
 
-        Ok(())
+        fs::write(&pathname, new_contents).unwrap();
+
+        Ok(pathname)
       }
-      None => Ok(()), // TODO: Handle gracefully
+      None => Err(CarbonError::new("No configuration found")),
     }
   }
 }
