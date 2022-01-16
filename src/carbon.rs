@@ -18,6 +18,7 @@ pub struct Blueprint {
   name: String,
   template: String,
   root_dir: String,
+  file_type: String,
 }
 
 /// A configuration file will have a list of Blueprints
@@ -38,11 +39,12 @@ impl Configuration {
 }
 
 /// Build the path for where the newly generated file should live
-fn _build_destination_path(root: &str, filename: &str) -> String {
+fn _build_destination_path(root: &str, filename: &str, ext: &str) -> String {
   let mut pathname = String::new();
   pathname += &root;
   pathname += "/";
   pathname += &filename;
+  pathname += &ext;
 
   pathname
 }
@@ -81,7 +83,7 @@ impl Carbon {
   pub fn generate(&mut self, blueprint: &str, name: &str) -> io::Result<()> {
     match self.blueprints.get(blueprint) {
       Some(config) => {
-        let pathname = _build_destination_path(&config.root_dir, &name);
+        let pathname = _build_destination_path(&config.root_dir, &name, &config.file_type);
 
         // Make sure the root_dir actually exists
         // TODO: Gracefully handle overwriting a file
