@@ -7,13 +7,13 @@ Relies on a simple configuration file that specifies the "rules" for your boiler
 carbon-config.js
 
 {
-	"blueprints": [
-		{
-			"name": "test-module",
-			"template": "src/blueprints/test-module.py",
-			"root_dir": "tests",
-			"file_type": "py"
-		}
-	]
+  "blueprints": [
+    {
+      "name": "test-module",
+      "template": "src/blueprints/test-module.py",
+      "root_dir": "tests",
+      "file_type": ".js"
+    }
+  ]
 }
 ```
